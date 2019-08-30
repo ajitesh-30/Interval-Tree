@@ -27,7 +27,7 @@ public:
             return;
      	
      	V valend;
-     	bool x = true;
+     	bool extra = true;
      	auto lbBegin = m_map.lower_bound(keyBegin);
      	auto lbEnd = m_map.lower_bound(keyBegin);
 
@@ -36,7 +36,7 @@ public:
      		lbBegin->second = val;
      		++lbEnd;
      		if(lbEnd==m_map.end()){
-     			x = false;
+     			extra = false;
      		}
      	}
      	else{
@@ -89,3 +89,40 @@ public:
 // Many solutions we receive are incorrect. Consider using a randomized test
 // to discover the cases that your implementation does not handle correctly.
 // We recommend to implement a test function that tests the functionality of
+void IntervalMapTest()
+{
+    interval_map<unsigned int, unsigned int> m(0);
+    int A[10]{ 0 };
+
+    int count = 1 << 20;
+    while (count--)
+    {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dis(0, 9);
+        int begin = dis(gen);
+        int end = dis(gen);
+        int value = dis(gen);
+        //std::cout << begin << ' ' << end << ' ' << value << std::endl;
+
+        m.assign(begin, end, value);
+        for (int i = begin; i < end; ++i)
+            A[i] = value;
+    }
+
+    for (auto i = 0; i < 10; ++i)
+    {
+        std::cout << i << ' ' << A[i] << std::endl;
+    }
+    std::cout << std::endl;
+    for (auto it = m.m_map.begin(); it != m.m_map.end(); ++it)
+    {
+        std::cout << it->first << ' ' << it->second << std::endl;
+    }
+}
+
+int main(int argc, char* argv[])
+{
+    IntervalMapTest();
+    return 0;
+}
