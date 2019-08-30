@@ -1,5 +1,8 @@
+#include <assert.h>
 #include <map>
 #include <limits>
+#include <iostream>
+#include <random>
 
 template<typename K, typename V>
 class interval_map {
@@ -20,32 +23,61 @@ public:
     // and assign must do nothing.
     void assign( K const& keyBegin, K const& keyEnd, V const& val ) {
 
-    	if (!(keyBegin<keyEnd))
-    	{
-    		return;
-    	}
+    	if (!(keyBegin < keyEnd))
+            return;
+     	
+     	V valend;
+     	bool x = true;
+     	auto lbBegin = m_map.lower_bound(keyBegin);
+     	auto lbEnd = m_map.lower_bound(keyBegin);
 
-    	// Get index of first element having value greater than keyEnd
-    	auto nextInterval = --m_map.upper_bound(keyEnd);
+     	if(lbBegin!=m_map.end() && lbBegin->first==keyBegin){
+     		valend = lbBegin->second;
+     		lbBegin->second = val;
+     		++lbEnd;
+     		if(lbEnd==m_map.end()){
+     			x = false;
+     		}
+     	}
+     	else{
+     		auto upBegin = lbBegin;
+     		--upBegin;
+     		valend = upBegin->second;
+     		if(upBegin->second!=val){
+     			auto it = m_map.insert(lbBegin,std::make_pair(keyBegin,val));
+     			lbBegin = it;
+     			lbEnd = ++it;
+     		}
+     	}
 
-    	auto lbBegin = m_map.end();
-    	auto ubBegin = m_map.end();
+     	auto upEnd = m_map.lower_bound(keyEnd);
+     	auto upDelete = upEnd;
 
-    	assert(nextInterval!=m_map.end());
-
-
-    	if (nextInterval->second==val){
-    		nextInterval = nextInterval+1;
-    	}
-    	else if(nextInterval->first<keyEnd){
-    		const V & nextValue = nextInterval.second;
-    		++nextInterval;
-    		inserted1 = nextInterval = m_map.emplace(nextInterval,keyEnd,nextValue);
-    	}
-
-
-
-
+     	if(upDelete==lbEnd){
+     		x=false;
+     	}
+     	if(upEnd==m_map.end() || upEnd->first!=keyEnd)
+     	{
+     		auto prev = upEnd;
+     		--prev;
+     		if(prev!=lbBegin)
+     		{
+     			valend = prev->second;
+     		}
+     		if(valend!=val)
+     		{
+     			auto it = m_map.insert(upEnd,std::make_pair(keyEnd,valend));
+     			upDelete=it;
+     			if((++it)!=m_map.end() && it->second==valend)
+     			{
+     				 m_map.erase(it);
+     			}
+     		}
+     	}
+     	if(x && lbEnd!=m_map.end() && upDelete!=m_map.end() && lbEnd->first < upDelete->first)
+     	{
+     		m_map.erase(lbEnd,upDelete);
+     	}
     }
 
     // look-up of the value associated with key
@@ -57,4 +89,3 @@ public:
 // Many solutions we receive are incorrect. Consider using a randomized test
 // to discover the cases that your implementation does not handle correctly.
 // We recommend to implement a test function that tests the functionality of
-// the interval_map, for example using a map of unsigned int intervals to char.
